@@ -537,7 +537,7 @@ be a format" % (node.coord.line,))
         if self.inswitch:
             raise NotSupported("Loop inside switch", line=node.coord.line)
 
-        self.visit_loop(node, None, node.cond, node.cond, node.stmt,
+        self.visit_loop(node, None, node.cond, None, node.stmt,
                         False, 'while')
 
     def visit_DoWhile(self, node):

@@ -4,6 +4,7 @@ import argparse
 
 from clara.clara import Clara
 from clara.common import print_trace
+from clara.ut_matcher import process_model
 
 
 def evaluate_sources(sources_base_dir):
@@ -25,8 +26,9 @@ def evaluate_source(source):
     inputs = [1, 2, 3, 4]
     clara = Clara(inputs)
     clara.process_sources([source])
-    trace = clara.eval()
-    print_trace(trace)
+    model, trace = clara.eval()
+    process_model(model, trace)
+    # print_trace(trace)
 
 
 def do_clustering(sources_base_dir):
@@ -63,15 +65,5 @@ def match(source_a, source_b):
 
 
 if __name__ == '__main__':
-    inputs = ['4', '10', '636 649 338 11 -726 -767 940 813 836 -795', '10',
-              '-908 520 -287 315 195 -398 317 467 686 -630', '8', '45 113 -406 694 -505 967 682 -356', '6',
-              '-367 314 21 479 -963 -137']
-    parser = argparse.ArgumentParser()
-    parser.add_argument('lang')
-    parser.add_argument('correct_sources_dir')
-    parser.add_argument('wrong_source')
-    args = parser.parse_args()
-    generate_feedback(args.lang, args.correct_sources_dir, args.wrong_source, inputs)
-    # do_repair('./resources/a.c', './resources/b.c')
-    # do_clustering('./resources/utap/1001/accepted/')
+    evaluate_source('./resources/a.c')
     # match('./resources/a.c', './resources/a.c')

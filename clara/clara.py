@@ -12,6 +12,7 @@ from clara.matching import Matching
 from clara.model import expr_to_dict
 from clara.parser import getlangparser
 from clara.repair import Repair
+from clara.ut_matcher import process_model
 
 VERBOSE = 1
 
@@ -31,9 +32,8 @@ class Clara(object):
 
     def eval(self):
         inter = self.interpreter(entryfnc=self.entry_function)
-        # print(self.models[0])
         trace = inter.run(self.models[0], args=None, ins=self.inputs)
-        return trace
+        return self.models[0], trace
 
     def process_source(self, src):
         with open(src, 'r', encoding="utf-8") as f:
