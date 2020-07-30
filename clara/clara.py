@@ -31,7 +31,7 @@ class Clara(object):
 
     def eval(self):
         inter = self.interpreter(entryfnc=self.entry_function)
-        # print(self.models[0])
+        print(self.models[0])
         trace = inter.run(self.models[0], args=None, ins=self.inputs)
         return trace
 

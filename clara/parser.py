@@ -2,11 +2,9 @@
 Common parser stuff
 '''
 
-import re
-
 # clara.py lib imports
 from .common import UnknownLanguage
-from .model import Program, Function, Expr, Op, Var, Const, VAR_COND, VAR_RET
+from .model import Program, Function, Expr, Op, Var, Const, VAR_COND, VAR_RET, SELF_LOOP_LOC
 
 
 class NotSupported(Exception):
@@ -154,7 +152,7 @@ class Parser(object):
             # Remember "real" vars and replace temps
             for var, expr in fnc.exprs(loc):
 
-                #expr.statement = True
+                # expr.statement = True
 
                 expr.prime(primed)
 
@@ -470,12 +468,25 @@ class Parser(object):
         if self.fncsl:
             self.fnc, self.loc = self.fncsl.pop()
         else:
+            last_loc = self.loc
+            if last_loc == 1:
+                self.add_selfloop_loc()
             self.fnc = None
             self.loc = None
 
     def addloc(self, desc):
         assert (self.fnc), 'No active fnc!'
         self.loc = self.fnc.addloc(desc=desc)
+        return self.loc
+
+    def add_selfloop_loc(self):
+        assert (self.fnc), 'No active fnc!'
+        last_loc = self.loc
+        self.loc = self.fnc.addloc(loc=SELF_LOOP_LOC, desc="Self Loop Location")
+        self.addtrans(last_loc, True, self.loc)
+        self.addtrans(self.loc, True, self.loc)
+        self.addtrans(self.loc, False, self.loc)
+        self.fnc.locexprs[self.loc] = self.fnc.locexprs[last_loc]
         return self.loc
 
     def addexpr(self, name, expr, loc=None, idx=None):

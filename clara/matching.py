@@ -5,7 +5,7 @@ Simulation relation
 # clara.py imports
 from .common import debug, equals
 from .interpreter import Interpreter, RuntimeErr, UndefValue, isundef
-from .model import SPECIAL_VARS, VAR_RET, VAR_IN, VAR_OUT, isprimed, prime
+from .model import SPECIAL_VARS, VAR_RET, VAR_IN, VAR_OUT, isprimed, prime, SELF_LOOP_LOC
 
 
 class Matching(object):
@@ -129,7 +129,7 @@ class Matching(object):
             # Check length of traces
             if len(t1) != len(t2):
                 self.debug('Different length of traces (%d <> %d)', len(t1), len(t2))
-                return
+                # return
 
             for (fnc1, loc1, mem1), (fnc2, loc2, mem2) in zip(t1, t2):
 
@@ -190,7 +190,7 @@ class Matching(object):
                     return sm[fnc1][loc1] == loc2
 
                 # Check if loc2 already mapped
-                if loc2 in list(sm[fnc1].values()):
+                if loc2 != SELF_LOOP_LOC and loc2 in list(sm[fnc1].values()):
                     return False
 
                 # Remember this pair
@@ -199,7 +199,7 @@ class Matching(object):
                 # Check number of transitions
                 n1 = f1.numtrans(loc1)
                 n2 = f2.numtrans(loc2)
-                if n1 != n2:
+                if loc2 != SELF_LOOP_LOC and n1 != n2:
                     return False
 
                 # Done
@@ -226,7 +226,7 @@ class Matching(object):
 
         return sm
 
-    def match_programs(self, P, Q, inter, ins=None, args=None, entryfnc=None, timeout=5):
+    def match_programs(self, P, Q, inter, ins=None, args=None, entryfnc=None, timeout=5000):
 
         # Check inputs and arguments
         assert ins or args, "Inputs or argument required"
@@ -244,6 +244,8 @@ class Matching(object):
         if sm is None:
             self.debug("No struct match!")
             return
+        else:
+            print(sm)
 
         # Populate ins or args (whichever may be missing)
         if not ins:

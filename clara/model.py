@@ -7,6 +7,7 @@ VAR_IN = '$in'
 VAR_OUT = '$out'
 EOF = 'EOF'
 SPECIAL_VARS = set([VAR_COND, VAR_RET, VAR_IN, VAR_OUT])
+SELF_LOOP_LOC = 99
 
 
 def isprimed(var):
@@ -506,7 +507,8 @@ class Function(object):
         '''
         Returns a transition location for loc and cond
         '''
-
+        if cond is None:
+            cond = False
         return self.loctrans[loc][cond]
 
     def addexpr(self, loc, var, expr, idx=None):

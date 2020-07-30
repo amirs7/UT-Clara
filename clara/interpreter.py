@@ -120,7 +120,6 @@ class Interpreter(object):
     def execute_Function(self, fnc, mem):
         self.fnc = fnc.name
         self.loc = fnc.initloc
-        eof_visited = False
         while True:
             for (var, expr) in fnc.exprs(self.loc):
                 val = self.execute(expr, mem)
@@ -147,7 +146,11 @@ class Interpreter(object):
             elif numtrans == 1:  # Trivially choose True
                 self.loc = fnc.trans(self.loc, True)
             else:
-                self.loc = fnc.trans(self.loc, mem.get(VAR_COND))
+                new_loc = fnc.trans(self.loc, mem.get(VAR_COND))
+                if new_loc == self.loc:
+                    break
+                else:
+                    self.loc = new_loc
         return self.trace
 
     def procmem(self, mem):
