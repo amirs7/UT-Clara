@@ -62,6 +62,18 @@ class CInterpreter(Interpreter):
         if c.value == "endl":
             return "\n";
 
+        # Integer
+        try:
+            return int(c.value)
+        except ValueError:
+            pass
+
+        # Float
+        try:
+            return float(c.value)
+        except ValueError:
+            pass
+
         # String
         if len(c.value) >= 2 and c.value[0] == c.value[-1] == '"':
             return str(c.value[1:-1])
@@ -74,18 +86,6 @@ class CInterpreter(Interpreter):
                     return ord(ch)
             except ValueError:
                 pass
-
-        # Integer
-        try:
-            return int(c.value)
-        except ValueError:
-            pass
-
-        # Float
-        try:
-            return float(c.value)
-        except ValueError:
-            pass
 
         assert False, 'Unknown constant: %s' % (c.value,)
 

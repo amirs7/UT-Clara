@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import os
-import argparse
 
 from clara.clara import Clara
 from clara.common import print_trace
+from clara.repair import StructMismatch
 from clara.ut_matcher import process_model
 
 
@@ -44,6 +44,18 @@ def do_repair(source_a, source_b, inputs):
     clara.repair()
 
 
+def two_phase_repair(source_a, source_b, inputs):
+    clara = Clara(inputs)
+    clara.process_sources([source_a, source_b])
+    try:
+        clara.repair()
+    except StructMismatch:
+        print("Struct Mismatch")
+        model_b = remove_while(source_b, inputs)
+        clara.models[1] = model_b
+        clara.repair()
+
+
 def generate_feedback(lang, correct_sources_dir, wrong_source, inputs):
     clara = Clara(inputs, lang=lang)
     sources = list(map(lambda source_name: correct_sources_dir + source_name, os.listdir(correct_sources_dir)))
@@ -80,4 +92,7 @@ def match_while(source_a, source_b, inputs):
 
 
 if __name__ == '__main__':
-    result = match_while('./resources/b.c', './resources/a.c', [4])
+    pass
+    # two_phase_repair()
+    # two_phase_repair('./resources/b.c', './resources/a.c', [4])
+    # result = match_while('./resources/b.c', './resources/a.c', [4])

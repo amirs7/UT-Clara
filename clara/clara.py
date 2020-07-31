@@ -11,7 +11,7 @@ from clara.interpreter import getlanginter
 from clara.matching import Matching
 from clara.model import expr_to_dict
 from clara.parser import getlangparser
-from clara.repair import Repair
+from clara.repair import Repair, StructMismatch
 from clara.ut_matcher import process_model
 
 VERBOSE = 1

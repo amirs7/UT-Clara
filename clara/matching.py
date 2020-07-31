@@ -3,7 +3,7 @@ Simulation relation
 '''
 
 # clara.py imports
-from .common import debug, equals
+from .common import debug, equals, print_trace
 from .interpreter import Interpreter, RuntimeErr, UndefValue, isundef
 from .model import SPECIAL_VARS, VAR_RET, VAR_IN, VAR_OUT, isprimed, prime
 
@@ -78,7 +78,9 @@ class Matching(object):
                     self.debug('')
 
                 # Check if equal
-                if isundef(val1) or equals(val1, val2):
+                if var1 == VAR_OUT and str(val1) == str(val2):
+                    newmatch.add(var2)
+                elif isundef(val1) or equals(val1, val2):
                     newmatch.add(var2)
 
             # If no match for then done
@@ -265,9 +267,9 @@ class Matching(object):
             t2 = I.run(Q, ins=i, args=a)
 
             T1.append(t1)
-            # self.debug("P1: %s", t1)
+            print_trace(t1)
             T2.append(t2)
-            # self.debug("P1: %s", t2)
+            print_trace(t2)
 
         self.debug("Programs executed, matching traces")
 
