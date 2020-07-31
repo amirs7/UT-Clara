@@ -87,7 +87,9 @@ class CInterpreter(Interpreter):
             except ValueError:
                 pass
 
-        assert False, 'Unknown constant: %s' % (c.value,)
+        return c.value
+
+        # assert False, 'Unknown constant: %s' % (c.value,)
 
     def execute_UnaryOp(self, op, x, mem):
 

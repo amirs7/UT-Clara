@@ -2,63 +2,42 @@
 import os
 
 from clara.clara import Clara
-from clara.common import print_trace
+from clara.common import print_trace, list_all_files
 from clara.repair import StructMismatch
-from clara.ut_matcher import process_model
-
-
-def evaluate_sources(sources_base_dir):
-    sources = os.listdir(sources_base_dir)
-    inputs = [1, 2, 3, 4]
-    evaluated_sources_count = 0
-    clara = Clara(inputs)
-    for source in sources:
-        clara.process_sources([sources_base_dir + source])
-        try:
-            trace = clara.eval()
-            evaluated_sources_count += 1
-        except Exception as e:
-            print(source, "failed!", e)
-    print(len(sources), evaluated_sources_count)
+from clara.ut_matcher import process_model, find_simple_while
 
 
 def evaluate_source(source, inputs):
     clara = Clara(inputs)
     clara.process_sources([source])
     model, trace = clara.eval()
+    print(model)
     print_trace(trace)
 
 
-def do_clustering(sources_base_dir):
-    inputs = [1, 2, 3, 4]
-    sources = list(map(lambda source_name: sources_base_dir + source_name, os.listdir(sources_base_dir)))
+def evaluate_sources(base_dir, inputs):
+    sources = list_all_files(base_dir)
+    evaluated_sources_count = 0
+    for source in sources:
+        try:
+            evaluate_source(source, inputs)
+            evaluated_sources_count += 1
+        except Exception as e:
+            print(source, "failed!", e)
+    print(len(sources), evaluated_sources_count)
+
+
+def do_clustering(base_dir, inputs):
+    sources = list_all_files(base_dir)
     print("Num of sources:", len(sources))
     clara = Clara(inputs)
     clara.process_sources(sources)
     clara.cluster()
 
 
-def do_repair(source_a, source_b, inputs):
-    clara = Clara(inputs)
-    clara.process_sources([source_a, source_b])
-    clara.repair()
-
-
-def two_phase_repair(source_a, source_b, inputs):
-    clara = Clara(inputs)
-    clara.process_sources([source_a, source_b])
-    try:
-        clara.repair()
-    except StructMismatch:
-        print("Struct Mismatch")
-        model_b = remove_while(source_b, inputs)
-        clara.models[1] = model_b
-        clara.repair()
-
-
 def generate_feedback(lang, correct_sources_dir, wrong_source, inputs):
     clara = Clara(inputs, lang=lang)
-    sources = list(map(lambda source_name: correct_sources_dir + source_name, os.listdir(correct_sources_dir)))
+    sources = list_all_files(correct_sources_dir)
     clara.process_sources(sources)
     cluster_files = clara.cluster()
     print("*********** Clustering Done! ***********")
@@ -83,16 +62,46 @@ def remove_while(source, inputs):
 def match_while(source_a, source_b, inputs):
     clara = Clara(inputs)
     clara.process_sources([source_a, source_b])
-    model_b = remove_while(source_b, inputs)
-    clara.models[1] = model_b
+    clara.models[1] = remove_while(source_b, inputs)
     if clara.match():
         print("Match!!!!!!!!!!!!!!!!!")
     else:
         print("No Match :(")
 
 
+def repair_using_clara(clara):
+    if clara.match():
+        print("Programs matched!")
+    else:
+        clara.repair()
+
+
+def do_repair(source_a, source_b, inputs):
+    clara = Clara(inputs)
+    clara.process_sources([source_a, source_b])
+    repair_using_clara(clara)
+
+
+def two_phase_repair(correct_src, wrong_src, inputs):
+    try:
+        do_repair(correct_src, wrong_src, inputs)
+    except StructMismatch:
+        print("Struct Mismatch")
+        clara = Clara(inputs)
+        clara.process_sources([correct_src, wrong_src])
+        if find_simple_while(clara.models[1]) is None:
+            print("wrong source does not have while loop")
+            return
+        clara.models[1] = remove_while(wrong_src, inputs)
+        repair_using_clara(clara)
+
+
 if __name__ == '__main__':
-    pass
-    # two_phase_repair()
+    evaluate_source('./resources/a.c', [2])
+    # evaluate_source('./resources/test/while.c', [4])
+    # clara = Clara([4])
+    # clara.models.append(remove_while('./resources/test/while.c', [4]))
+    # print(clara.eval())
+    # two_phase_repair('./resources/test/no_while.c', './resources/test/while.wrong.c', [4])
+    # two_phase_repair('./resources/test/while.wrong.c', './resources/test/no_while.c', [4])
     # two_phase_repair('./resources/b.c', './resources/a.c', [4])
-    # result = match_while('./resources/b.c', './resources/a.c', [4])

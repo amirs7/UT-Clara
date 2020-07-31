@@ -267,9 +267,9 @@ class Matching(object):
             t2 = I.run(Q, ins=i, args=a)
 
             T1.append(t1)
-            print_trace(t1)
+            print(t1)
             T2.append(t2)
-            print_trace(t2)
+            print(t2)
 
         self.debug("Programs executed, matching traces")
 

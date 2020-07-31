@@ -3,6 +3,7 @@ Common utilities used accross modules
 '''
 
 # Python imports
+import os
 import sys
 
 from clara.model import EOF
@@ -17,8 +18,12 @@ class UnknownLanguage(Exception):
 DEBUG_DEST = sys.stderr
 ERROR_DEST = sys.stderr
 
+DEBUG = False
+
 
 def debug(msg, *args):
+    if not DEBUG:
+        return
     if args:
         msg %= tuple(args)
     print('[debug] %s' % (msg,), file=DEBUG_DEST)
@@ -160,3 +165,7 @@ def evaluate_as_boolean(value):
     if isinstance(value, list) and len(value) > 0 and value[0] == EOF:
         return False
     return not not value
+
+
+def list_all_files(base_dir):
+    return list(map(lambda p: os.path.join(base_dir, p), os.listdir(base_dir)))

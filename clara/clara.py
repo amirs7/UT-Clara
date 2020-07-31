@@ -5,6 +5,7 @@ import os
 import shutil
 
 from clara.clustering import Clustering
+from clara.common import debug
 from clara.feedback import FeedGen, Feedback
 from clara.feedback_repair import RepairFeedback
 from clara.interpreter import getlanginter
@@ -37,9 +38,9 @@ class Clara(object):
 
     def process_source(self, src):
         with open(src, 'r', encoding="utf-8") as f:
-            print("processing", src)
+            debug("processing", src)
             code = f.read()
-            print("processed", src)
+            debug("processed", src)
         model = self.parser.parse_code(code)
         model.name = src
         return model
