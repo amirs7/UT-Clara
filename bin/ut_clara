@@ -22,13 +22,11 @@ def evaluate_sources(sources_base_dir):
     print(len(sources), evaluated_sources_count)
 
 
-def evaluate_source(source):
-    inputs = [1, 2, 3, 4]
+def evaluate_source(source, inputs):
     clara = Clara(inputs)
     clara.process_sources([source])
     model, trace = clara.eval()
-    process_model(model, trace)
-    # print_trace(trace)
+    print_trace(trace)
 
 
 def do_clustering(sources_base_dir):
@@ -40,8 +38,7 @@ def do_clustering(sources_base_dir):
     clara.cluster()
 
 
-def do_repair(source_a, source_b):
-    inputs = [1, 2, 3, 4]
+def do_repair(source_a, source_b, inputs):
     clara = Clara(inputs)
     clara.process_sources([source_a, source_b])
     clara.repair()
@@ -64,6 +61,23 @@ def match(source_a, source_b):
     print(clara.match())
 
 
+def remove_while(source, inputs):
+    clara = Clara(inputs)
+    clara.process_sources([source])
+    model, trace = clara.eval()
+    return process_model(model, trace)
+
+
+def match_while(source_a, source_b, inputs):
+    clara = Clara(inputs)
+    clara.process_sources([source_a, source_b])
+    model_b = remove_while(source_b, inputs)
+    clara.models[1] = model_b
+    if clara.match():
+        print("Match!!!!!!!!!!!!!!!!!")
+    else:
+        print("No Match :(")
+
+
 if __name__ == '__main__':
-    evaluate_source('./resources/a.c')
-    # match('./resources/a.c', './resources/a.c')
+    result = match_while('./resources/b.c', './resources/a.c', [4])

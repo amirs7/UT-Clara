@@ -509,6 +509,19 @@ class Function(object):
 
         return self.loctrans[loc][cond]
 
+    def idxof(self, loc, var):
+        for i in range(len(self.locexprs[loc])):
+            if self.locexprs[loc][i][0] == var:
+                return i
+        return -1
+
+    def replace_expr(self, loc, var, expr):
+        idx = self.idxof(loc, var)
+        if idx == -1:
+            self.addexpr(loc, var, expr)
+        else:
+            self.locexprs[loc][idx] = (var, expr)
+
     def addexpr(self, loc, var, expr, idx=None):
         '''
         Adds expr for var to loc
