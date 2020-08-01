@@ -37,9 +37,9 @@ class Clara(object):
 
     def process_source(self, src):
         with open(src, 'r', encoding="utf-8") as f:
-            print("processing", src)
+            # print("processing", src)
             code = f.read()
-            print("processed", src)
+            # print("processed", src)
         model = self.parser.parse_code(code)
         model.name = src
         return model
@@ -51,7 +51,7 @@ class Clara(object):
             self.models.append(model)
 
     def match(self):
-        matching = Matching(verbose=True)
+        matching = Matching()
         m = matching.match_programs(self.models[0], self.models[1],
                                     self.interpreter, ins=[self.inputs], entryfnc=self.entry_function)
         if m:
@@ -68,7 +68,7 @@ class Clara(object):
         for f in glob.glob(os.path.join(self.clusters_dir, "*." + self.lang)):
             model = self.process_source(f)
             existing.append(model)
-        print("Found %d existing clusters" % (len(existing)))
+        # print("Found %d existing clusters" % (len(existing)))
 
         new, mod = C.cluster(self.models, self.interpreter, ins=[self.inputs], entryfnc=self.entry_function,
                              existing=existing)

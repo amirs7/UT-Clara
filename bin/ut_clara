@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 import os
 import argparse
+from ast import literal_eval
 
 from clara.clara import Clara
-from clara.common import print_trace
+from clara.common import print_trace, list_all_files
 
 
-def evaluate_sources(sources_base_dir):
-    sources = os.listdir(sources_base_dir)
-    inputs = [1, 2, 3, 4]
+def evaluate_sources(lang, base_dir, inputs):
+    sources = list_all_files(base_dir)
     evaluated_sources_count = 0
-    clara = Clara(inputs)
+    clara = Clara(inputs, lang=lang)
     for source in sources:
-        clara.process_sources([sources_base_dir + source])
+        clara.process_sources([source])
         try:
             trace = clara.eval()
             evaluated_sources_count += 1
@@ -21,57 +21,75 @@ def evaluate_sources(sources_base_dir):
     print(len(sources), evaluated_sources_count)
 
 
-def evaluate_source(source):
-    inputs = [1, 2, 3, 4]
-    clara = Clara(inputs)
+def evaluate_source(lang, source, inputs):
+    clara = Clara(inputs, lang=lang)
     clara.process_sources([source])
     trace = clara.eval()
+    print(clara.models[0])
     print_trace(trace)
 
 
-def do_clustering(sources_base_dir):
-    inputs = [1, 2, 3, 4]
-    sources = list(map(lambda source_name: sources_base_dir + source_name, os.listdir(sources_base_dir)))
+def do_clustering(lang, base_dir, inputs):
+    sources = list(filter(lambda p: p.rsplit('.', 1)[1] == lang, list_all_files(base_dir)))
     print("Num of sources:", len(sources))
-    clara = Clara(inputs)
+    clara = Clara(inputs, lang=lang)
     clara.process_sources(sources)
     clara.cluster()
 
 
-def do_repair(source_a, source_b):
-    inputs = [1, 2, 3, 4]
-    clara = Clara(inputs)
+def do_repair(lang, source_a, source_b, inputs):
+    clara = Clara(inputs, lang=lang)
     clara.process_sources([source_a, source_b])
     clara.repair()
 
 
 def generate_feedback(lang, correct_sources_dir, wrong_source, inputs):
     clara = Clara(inputs, lang=lang)
-    sources = list(map(lambda source_name: correct_sources_dir + source_name, os.listdir(correct_sources_dir)))
+    sources = list_all_files(correct_sources_dir)
     clara.process_sources(sources)
     cluster_files = clara.cluster()
     print("*********** Clustering Done! ***********")
     clara.process_sources([*cluster_files, wrong_source])
-    print("Generated Repair:")
+    print("Generated Repair for", wrong_source, ":")
     clara.feedback()
 
 
-def match(source_a, source_b):
-    clara = Clara([])
+def match(lang, source_a, source_b, inputs):
+    clara = Clara(inputs, lang=lang)
     clara.process_sources([source_a, source_b])
-    print(clara.match())
+    if clara.match():
+        print(source_a, "and", source_b, "Matched!!!")
+    else:
+        print(source_a, "and", source_b, "Do not match!!!")
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("operation", help="operation to run", choices=["repair", "cluster", "match", "eval"])
+    parser.add_argument("--lang", default="cpp", help="programs language, default is cpp")
+    parser.add_argument("--src", help="source file")
+    parser.add_argument("--match-src", help="other source file for match")
+    parser.add_argument("--src-dir", help="sources directory")
+    parser.add_argument("--inputs", required=True, help="inputs")
+    args = parser.parse_args()
+    args.inputs = literal_eval(args.inputs)
+    return args
 
 
 if __name__ == '__main__':
-    inputs = ['4', '10', '636 649 338 11 -726 -767 940 813 836 -795', '10',
-              '-908 520 -287 315 195 -398 317 467 686 -630', '8', '45 113 -406 694 -505 967 682 -356', '6',
-              '-367 314 21 479 -963 -137']
-    parser = argparse.ArgumentParser()
-    parser.add_argument('lang')
-    parser.add_argument('correct_sources_dir')
-    parser.add_argument('wrong_source')
-    args = parser.parse_args()
-    generate_feedback(args.lang, args.correct_sources_dir, args.wrong_source, inputs)
-    # do_repair('./resources/a.c', './resources/b.c')
-    # do_clustering('./resources/utap/1001/accepted/')
-    # match('./resources/a.c', './resources/a.c')
+    args = parse_arguments()
+    if args.operation == 'eval':
+        assert args.src is not None, "src file is not provided"
+        evaluate_source(args.lang, args.src, args.inputs)
+    if args.operation == 'match':
+        assert args.src is not None, "src file is not provided"
+        assert args.match_src is not None, "match src is not provided"
+        match(args.lang, args.src, args.match_src, args.inputs)
+    if args.operation == 'cluster':
+        assert args.src_dir is not None, "src_dir is not provided"
+        do_clustering(args.lang, args.src_dir, args.inputs)
+    if args.operation == 'repair':
+        assert args.src is not None, "src is not provided"
+        assert args.src_dir is not None, "src_dir is not provided"
+        generate_feedback(args.lang, args.src_dir, args.src, args.inputs)
+    pass
