@@ -102,10 +102,10 @@ class Interpreter(object):
     def execute(self, obj, mem):
 
         # Check for timeout
-        if self.timeout and self.starttime \
-                and (time.time() - self.starttime > self.timeout):
-            raise RuntimeErr(
-                'Timeout (%.3f)' % (round(time.time() - self.starttime, 3),))
+        # if self.timeout and self.starttime \
+        #         and (time.time() - self.starttime > self.timeout):
+        #     raise RuntimeErr(
+        #         'Timeout (%.3f)' % (round(time.time() - self.starttime, 3),))
 
         # Get name of the object to be executed
         name = obj.__class__.__name__
