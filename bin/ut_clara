@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+import argparse
+from ast import literal_eval
 
 from clara.clara import Clara
 from clara.common import print_trace, list_all_files
@@ -7,32 +9,40 @@ from clara.repair import StructMismatch
 from clara.ut_matcher import process_model, find_simple_while
 
 
-def evaluate_source(source, inputs):
-    clara = Clara(inputs)
-    clara.process_sources([source])
-    model, trace = clara.eval()
-    print(model)
-    print_trace(trace)
-
-
-def evaluate_sources(base_dir, inputs):
+def evaluate_sources(lang, base_dir, inputs):
     sources = list_all_files(base_dir)
     evaluated_sources_count = 0
+    clara = Clara(inputs, lang=lang)
     for source in sources:
+        clara.process_sources([source])
         try:
-            evaluate_source(source, inputs)
+            trace = clara.eval()
             evaluated_sources_count += 1
         except Exception as e:
             print(source, "failed!", e)
     print(len(sources), evaluated_sources_count)
 
 
-def do_clustering(base_dir, inputs):
-    sources = list_all_files(base_dir)
+def evaluate_source(lang, source, inputs):
+    clara = Clara(inputs, lang=lang)
+    clara.process_sources([source])
+    trace = clara.eval()
+    print(clara.models[0])
+    print_trace(trace)
+
+
+def do_clustering(lang, base_dir, inputs):
+    sources = list(filter(lambda p: p.rsplit('.', 1)[1] == lang, list_all_files(base_dir)))
     print("Num of sources:", len(sources))
-    clara = Clara(inputs)
+    clara = Clara(inputs, lang=lang)
     clara.process_sources(sources)
     clara.cluster()
+
+
+def do_repair(lang, source_a, source_b, inputs):
+    clara = Clara(inputs, lang=lang)
+    clara.process_sources([source_a, source_b])
+    clara.repair()
 
 
 def generate_feedback(lang, correct_sources_dir, wrong_source, inputs):
@@ -42,14 +52,17 @@ def generate_feedback(lang, correct_sources_dir, wrong_source, inputs):
     cluster_files = clara.cluster()
     print("*********** Clustering Done! ***********")
     clara.process_sources([*cluster_files, wrong_source])
-    print("Generated Repair:")
+    print("Generated Repair for", wrong_source, ":")
     clara.feedback()
 
 
-def match(source_a, source_b):
-    clara = Clara([])
+def match(lang, source_a, source_b, inputs):
+    clara = Clara(inputs, lang=lang)
     clara.process_sources([source_a, source_b])
-    print(clara.match())
+    if clara.match():
+        print(source_a, "and", source_b, "Matched!!!")
+    else:
+        print(source_a, "and", source_b, "Do not match!!!")
 
 
 def remove_while(source, inputs):
@@ -59,32 +72,9 @@ def remove_while(source, inputs):
     return process_model(model, trace)
 
 
-def match_while(source_a, source_b, inputs):
-    clara = Clara(inputs)
-    clara.process_sources([source_a, source_b])
-    clara.models[1] = remove_while(source_b, inputs)
-    if clara.match():
-        print("Match!!!!!!!!!!!!!!!!!")
-    else:
-        print("No Match :(")
-
-
-def repair_using_clara(clara):
-    if clara.match():
-        print("Programs matched!")
-    else:
-        clara.repair()
-
-
-def do_repair(source_a, source_b, inputs):
-    clara = Clara(inputs)
-    clara.process_sources([source_a, source_b])
-    repair_using_clara(clara)
-
-
-def two_phase_repair(correct_src, wrong_src, inputs):
+def two_phase_repair(lang, correct_src, wrong_src, inputs):
     try:
-        do_repair(correct_src, wrong_src, inputs)
+        do_repair(lang, correct_src, wrong_src, inputs)
     except StructMismatch:
         print("Struct Mismatch")
         clara = Clara(inputs)
@@ -93,15 +83,43 @@ def two_phase_repair(correct_src, wrong_src, inputs):
             print("wrong source does not have while loop")
             return
         clara.models[1] = remove_while(wrong_src, inputs)
-        repair_using_clara(clara)
+        clara.repair()
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("operation", help="operation to run", choices=["repair", "cluster", "match", "eval"])
+    parser.add_argument("--lang", default="cpp", help="programs language, default is cpp")
+    parser.add_argument("--src", help="source file")
+    parser.add_argument("--two-phase", help="use two phase repair", action="store_true")
+    parser.add_argument("--repair-src", help="other source file for two phase repair")
+    parser.add_argument("--match-src", help="other source file for match")
+    parser.add_argument("--src-dir", help="sources directory")
+    parser.add_argument("--inputs", required=True, help="inputs")
+    args = parser.parse_args()
+    args.inputs = literal_eval(args.inputs)
+    return args
 
 
 if __name__ == '__main__':
-    evaluate_source('./resources/a.c', [2])
-    # evaluate_source('./resources/test/while.c', [4])
-    # clara = Clara([4])
-    # clara.models.append(remove_while('./resources/test/while.c', [4]))
-    # print(clara.eval())
-    # two_phase_repair('./resources/test/no_while.c', './resources/test/while.wrong.c', [4])
-    # two_phase_repair('./resources/test/while.wrong.c', './resources/test/no_while.c', [4])
-    # two_phase_repair('./resources/b.c', './resources/a.c', [4])
+    args = parse_arguments()
+    if args.operation == 'eval':
+        assert args.src is not None, "src file is not provided"
+        evaluate_source(args.lang, args.src, args.inputs)
+    if args.operation == 'match':
+        assert args.src is not None, "src file is not provided"
+        assert args.match_src is not None, "match src is not provided"
+        match(args.lang, args.src, args.match_src, args.inputs)
+    if args.operation == 'cluster':
+        assert args.src_dir is not None, "src_dir is not provided"
+        do_clustering(args.lang, args.src_dir, args.inputs)
+    if args.operation == 'repair':
+        print(args)
+        assert args.src is not None, "src is not provided"
+        if args.two_phase:
+            assert args.repair_src is not None, "repair_src is not provided"
+            two_phase_repair(args.lang, args.src, args.repair_src, args.inputs)
+        else:
+            assert args.src_dir is not None, "src_dir is not provided"
+            generate_feedback(args.lang, args.src_dir, args.src, args.inputs)
+    pass
