@@ -2,8 +2,8 @@
 This repository is a fork from https://github.com/iradicek/clara
 
 UT Clara is command line tool, you can download binaries form release page or the following links
-* [Linux Binaries](https://github.com/amirs7/UT-Synthesis-Project/releases/download/v1.1/ut_clara_linux.zip)
-* [Mac OSX Binaries](https://github.com/amirs7/UT-Synthesis-Project/releases/download/v1.1/ut_clara_macosx.zip)
+* [Linux Binaries](https://github.com/amirs7/UT-Clara/releases/download/v1.0/ut_clara_linux.zip)
+* [Mac OSX Binaries](https://github.com/amirs7/UT-Clara/releases/download/v1.0/ut_clara_macosx.zip)
 
 ## Usage 
 
@@ -35,10 +35,13 @@ Generates a repair for the given program regarding the correct programs in the d
 For generating repair for programs with different structure, currently a simple command is implemented which generates a repair for a given program with regard to another program. 
 The different is that the repair is generated even if the correct does not have any loops and the wrong program contains a simple loop.
 
-> Due to some conflicts with master branch, to use this command you must use the code or binaries fro`two-phase-repair`branch:
-> 
+
+For this command correct program must be provided with `--src` and wrong program with `--repair-src`. 
+
+> Due to some conflicts with master branch, to use this command you must use the code or binaries fro`two-phase-repair` branch:
+> * [Linux Binaries](https://github.com/amirs7/UT-Clara/releases/download/v2.0/ut_clara_linux.zip)
+> * [Mac OSX Binaries](https://github.com/amirs7/UT-Clara/releases/download/v2.0/ut_clara_macosx.zip)
 
 ```
- ut_clara  repair --src ./examples/sum.wrong.cpp --src-dir ./resources/utap/1001/accepted/  --inputs "[1,2]"
-
+ ut_clara  repair --two-phase --src ./examples/no_while.cpp --repair-src ./examples/while.wrong.cpp --inputs "[4]"
 ```
